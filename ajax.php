@@ -17,6 +17,7 @@ require( $_SERVER['DOCUMENT_ROOT'] . '/all/ajax.start.php' );
 
 
 if (
+        ( isset($_REQUEST['act2']{0}) && $_REQUEST['act2'] == 'read48_and_refresh_all' ) ||
         ( isset($_REQUEST['action']{0}) && isset($_REQUEST['s']{5}) && \Nyos\nyos::checkSecret($_REQUEST['s'], $_REQUEST['action']) === true)
 ) {
     
@@ -109,8 +110,9 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
     //$e = \Nyos\mod\IikoChecks::importChecks($db, $_GET['user']);
     // \f\pa($e,2,null,'\Nyos\mod\IikoChecks::searchChecks');
 
+    // грузим инфу если с последней загрузки прошло более часа
     $e = \Nyos\mod\IikoChecks::getUserForLoad($db, 'час');
-    \f\pa($e, null, null, '\Nyos\mod\IikoChecks::getUserForLoad($db);');
+    //\f\pa($e, null, null, '\Nyos\mod\IikoChecks::getUserForLoad($db);');
 
     foreach ($e as $k => $v) {
 
