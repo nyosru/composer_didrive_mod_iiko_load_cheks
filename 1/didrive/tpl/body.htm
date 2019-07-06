@@ -1,0 +1,173 @@
+
+<div class="container-fluid">
+    <div class="grid">
+
+        {#
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                запускается автоматически несколько раз в день
+            </div>
+        </div>
+        #}
+
+        <div class="row">
+            <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4 col-xl-4">
+
+
+                {% set mans = readItems( '070.jobman', null )  %}
+                {#{ pa(mans) }#}
+
+                {#
+                <br/>
+                <br/>
+
+                <button class="btn btn-sm btn-info"
+                        onclick="
+                                $('#iframe_status').html('<img src=\'/img/load.gif\' >грузим данные, секунду пожалуйста');
+                                $('#for_load').attr('src', 'https://{{ server.HTTP_HOST }}/vendor/didrive_mod/iiko_checks/ajax.php?action=loglist&s={{ creatSecret('loglist') }}&show=html');
+                                $('#for_load').on('load', function () {
+                                    $('#iframe_status').text('загружено');
+                                });
+                        "
+                        >Список загрузок данных по сотрудникам</button>
+
+                <br/>
+                <br/>
+
+                <button class="btn btn-sm btn-info"
+                        onclick="
+                                $('#iframe_status').html('<img src=\'/img/load.gif\' >грузим данные, секунду пожалуйста');
+                                $('#for_load').attr('src', 'https://{{ server.HTTP_HOST }}/vendor/didrive_mod/iiko_checks/ajax.php?action=load10&start_load=2019-05-01&s={{ creatSecret('load10') }}&show=html');
+                                $('#for_load').on('load', function () {
+                                    $('#iframe_status').text('загружено');
+                                });
+                        "
+                        >Загрузить данные 10 сотрудников</button>
+
+                <br/>
+                <br/>
+                #}
+                {#
+                
+                удаление значений
+                del_old=da
+                
+                <button class="btn btn-sm btn-info"
+                        onclick="
+                            $('#iframe_status').html('<img src=\'/img/load.gif\' >грузим данные, секунду пожалуйста');
+                                $('#for_load').attr('src', 'https://{{ server.HTTP_HOST }}/vendor/didrive_mod/iiko_checks/ajax.php?action=load10&del_old=da&start_load=2019-05-01&s={{ creatSecret('load10') }}&show=html');
+                                $('#for_load').on('load',function () {
+                                    $('#iframe_status').text('загружено');
+                                });
+                        "
+                        >стереть данные и загрузить данные 10 сотрудников</button>
+
+                <br/>
+                <br/>
+                #}
+
+                <br/>
+                <br/>
+                <h3>форма формирования запроса</h3>
+                
+                <form action="/vendor/didrive_mod/iiko_checks/ajax.php" target="iframe_for_ajax" method="GET" id="form_for_ajax" >
+
+                    {% set mans = readItems( '070.jobman', null )  %}
+                    {#{ pa(mans) }#}
+
+                    <select name="act2" class="form-control" >
+
+                        <option value="">действие</option>
+
+                        <option value="loglist">показать лог загрузок</option>
+                        <option value="load10">загрузить и обновить информацию с 1 мая по текущий день</option>
+                        <option value="read48_and_refresh">загрузить и обновить информацию за прошедшие 48 часа от сейчас (выберите сотрудника)</option>
+                        <option value="read48_and_refresh_all">из списска всех работников, грузим 10 из тех чьи чеки не обновлялись более 1 часа</option>
+                        <option value="clear_all_checks">удалить все чеки выбранного человека</option>
+
+                    </select>
+
+                        <br/>
+                        
+                    <input name="start_load" type="date" class="form-control" >
+                        <br/>
+                        
+                    <select name="user" class="form-control" >
+
+                        <option value="">все пользователи определённые на работу в точках продаж</option>
+
+                        {% for k,v in mans.data %}
+                            <option value="{{ v.id }}">{{ v.head }}</option>
+                        {% endfor %}
+
+                    </select>
+
+                        <br/>
+                        <br/>
+                        
+                    <label>
+                        <input type="checkbox" name="del_old" value="da" > удалить старые данные
+                    </label>
+                        <br/>
+
+                    <label>
+                        <input type="checkbox" name="show_get" value="da" > показать входящие данные
+                    </label>
+                        <br/>
+
+                    <label>
+                        <input type="checkbox" name="show_timer" value="da" > показать время выполнения
+                    </label>
+                        <br/>
+
+                    <label>
+                        <input type="checkbox" name="show_request" value="da" > показать строку запроса
+                    </label>
+                        <br/>
+
+                    <label>
+                        <input type="checkbox" name="show" value="html" checked="checked" > формат получаемго результата в HTML
+                    </label>
+                        <br/>
+
+
+                    <input type="hidden" name="action" value="ajax" >
+                    <input type="hidden" name="s" value="{{ creatSecret('ajax') }}" >
+
+                    <button type="submit" class="btn btn-success" >Выполнить!</button>
+
+                </form>
+
+
+
+
+
+
+
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-8 col-lg-8 col-xl-8">
+                <div id="iframe_status" ></div>
+                <iframe name="iframe_for_ajax" id="for_load" style="width:100%;height: 50vh;" > < < Выберите действие < < </iframe>
+            </div>
+        </div>
+
+
+        {# list #}
+
+        {# если редактирование, то показываем форму редактирования #}
+
+        {#
+            {% if get.edit_id is defined and list.data[get.edit_id] is defined %}
+
+                {% include 'vendor/didrive_mod/items/1/didrive/t/body.form_add.htm' %}
+
+            {% else %}
+
+                {% include 'vendor/didrive_mod/items/1/didrive/t/body.form_add.htm' %}
+                {% include 'vendor/didrive_mod/items/1/didrive/t/body.list_items.htm' %}
+
+            {% endif %}
+        #}
+
+    </div>
+</div>
