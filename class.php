@@ -22,8 +22,8 @@ class IikoChecks {
      * / 3дня - ищем тех у кого больше часа последний чек
      * @return type
      */
-    public static function getUserForLoad($db, $otrezok = null ) {
-        
+    public static function getUserForLoad($db, $otrezok = null) {
+
         $ff = $db->prepare('SELECT 
                     mi.id,
                     mi.head,
@@ -47,14 +47,11 @@ class IikoChecks {
 
                 INNER JOIN `mitems` mi3 ON mi3.status = \'show\' AND mi3.module = \'jobman_send_on_sp\'
                 INNER JOIN `mitems-dops` mid31 ON mid31.id_item = mi3.id AND mid31.name = \'jobman\' AND mid31.value = mi.id '
-
-                .' LEFT JOIN `mitems-dops` mid3 ON mid3.id_item = mi2.id AND mid3.name = \'jobman\' AND mid3.value = mi.id
+                . ' LEFT JOIN `mitems-dops` mid3 ON mid3.id_item = mi2.id AND mid3.name = \'jobman\' AND mid3.value = mi.id
                 LEFT JOIN `mitems` mi2 ON mi2.status = \'show\' AND mi2.module = \'081.job_checks_from_iiko\' ' .
                 ' LEFT JOIN `mitems-dops` mid2 ON mid2.id_item = mi2.id AND mid2.name = \'data\' ' // 'AND mid2.value < :date '
-                
-                .( $otrezok == 'час' ? ' INNER JOIN `mitems-dops` mid25 ON mid25.id = mid2.id AND mid25.value_datetime < datetime( \''.date( 'Y-m-d H:i:s', $_SERVER['REQUEST_TIME'] ).'\',\'-1 hours\' )  ' : '' )
-                
-                .'
+                . ( $otrezok == 'час' ? ' INNER JOIN `mitems-dops` mid25 ON mid25.id = mid2.id AND mid25.value_datetime < datetime( \'' . date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']) . '\',\'-1 hours\' )  ' : '' )
+                . '
 
                 WHERE
 
@@ -162,6 +159,71 @@ class IikoChecks {
      * @param type $array_on_server
      * @param type $checks
      */
+    public static function getIikoIdFromJobman($db, int $user_id, $module_jobman = '070.jobman') {
+
+        $ff = $db->prepare('SELECT 
+                    mi.id, 
+                    mid.value iiko_id
+                FROM 
+                    mitems mi
+                    
+                INNER JOIN `mitems-dops` mid ON mid.id_item = mi.id AND mid.name = \'iiko_id\'
+
+                WHERE
+
+                    mi.module = :mod_jobman AND
+                    mi.status = \'show\' AND
+                    mi.id = :id_user
+                ;');
+
+        $ff->execute(array(
+            ':id_user' => $user_id,
+            ':mod_jobman' => $module_jobman,
+                //':date' => ' date(\'' . date('Y-m-d', $_SERVER['REQUEST_TIME'] - 3600*24*100 ) .'\') ',
+                // ':dates' => $start_date //date( 'Y-m-d', ($_SERVER['REQUEST_TIME'] - 3600 * 24 * 14 ) )
+        ));
+        if ($user = $ff->fetch()) {
+            return $user['iiko_id'];
+        } else {
+            throw new \Exception('не найден id в iiko для пользователя ' . $user_id);
+        }
+    }
+
+    /**
+     * получаем чеки 1 работника с даты по дату
+     * @param type $db
+     * @param int $user_id
+     * @param string $date_start
+     * @param string $date_fin
+     * @param type $mod_checks
+     * @return type
+     */
+    public static function getChecksJobman($db, int $user_id, string $date_start, string $date_fin, $mod_checks = '050.chekin_checkout' ) {
+
+        // начинаем сравнивать что есть чего нет
+        \Nyos\mod\items::$sql_itemsdop_add_where_array = array(
+            ':man' => $user_id
+            ,
+            ':datestart' => date('Y-m-d 00:00:00', strtotime($date_start) )
+            ,
+            ':datefin' => date('Y-m-d 23:59:00', strtotime($date_fin) )
+        );
+        $checki = \Nyos\mod\items::$sql_itemsdop2_add_where = '
+            INNER JOIN `mitems-dops` m1 ON m1.id_item = mi.id AND m1.name = \'jobman\' AND m1.value = :man
+            INNER JOIN `mitems-dops` m2 ON m2.id_item = mi.id AND m2.name = \'start\' AND m2.value_datetime >= :datestart
+            INNER JOIN `mitems-dops` m3 ON m3.id_item = mi.id AND m3.name = \'start\' AND m3.value_datetime <= :datefin
+            ';
+        $checki = \Nyos\mod\items::getItemsSimple($db, $mod_checks , 'show');
+        // \f\pa($checki, 2, '', '$checki');
+
+        return $checki['data'];
+    }
+
+    /**
+     * загружаем чеки с сервера, сравниваем с чеками на сайте и добавляем чего не хватает
+     * @param type $array_on_server
+     * @param type $checks
+     */
     public static function importChecks($db, int $user_id, $what_day_to_diff = 3, $folder = '', $module_jobman = '070.jobman', $module_checks = '050.chekin_checkout') {
 
         // $day_checked = 5;
@@ -171,7 +233,7 @@ class IikoChecks {
             $folder = \Nyos\Nyos::$folder_now;
 
         $for_end = '';
-        
+
         try {
 
             $date_load = date('Y-m-d', ($_SERVER['REQUEST_TIME'] - 3600 * 24 * $what_day_to_diff));
@@ -289,23 +351,19 @@ class IikoChecks {
 
                     \Nyos\mod\items::addNew($db, $folder, \Nyos\Nyos::$menu['050.chekin_checkout'], $indb);
                     $for_end .= '<br/>' . __LINE__ . ' добавили чек ';
-
                 }
             }
-            
-            return \f\end2('обработка прошла успешно ', true, array( 'txt' => $for_end ), 'array' );
-            
+
+            return \f\end2('обработка прошла успешно ', true, array('txt' => $for_end), 'array');
         } catch (\PDOException $ex) {
             $msg = '<pre>--- ' . __FILE__ . ' ' . __LINE__ . '-------'
-            . PHP_EOL . $ex->getMessage() . ' #' . $ex->getCode()
-            . PHP_EOL . $ex->getFile() . ' #' . $ex->getLine()
-            . PHP_EOL . $ex->getTraceAsString()
-            . '</pre>';
-            
-            return \f\end2('какая то ошибка', false, array( 'txt' => $for_end, 'error' => $msg ), 'array' );
-            
+                    . PHP_EOL . $ex->getMessage() . ' #' . $ex->getCode()
+                    . PHP_EOL . $ex->getFile() . ' #' . $ex->getLine()
+                    . PHP_EOL . $ex->getTraceAsString()
+                    . '</pre>';
+
+            return \f\end2('какая то ошибка', false, array('txt' => $for_end, 'error' => $msg), 'array');
         }
-        
     }
 
     /**

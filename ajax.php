@@ -16,6 +16,14 @@ require( $_SERVER['DOCUMENT_ROOT'] . '/all/ajax.start.php' );
 
 
 
+if (isset($_GET['show_get']) && $_GET['show_get'] = 'da') {
+    echo '<pre>';
+    print_r($_GET);
+    echo '</pre>';
+    echo '<br/><br/>';
+}
+
+
 if (
         ( isset($_REQUEST['act2']{0}) && $_REQUEST['act2'] == 'read48_and_refresh_all' ) ||
         ( isset($_REQUEST['action']{0}) && isset($_REQUEST['s']{5}) && \Nyos\nyos::checkSecret($_REQUEST['s'], $_REQUEST['action']) === true)
@@ -30,20 +38,19 @@ else {
 //        $e .= '<Br/>' . $k . ' - ' . $v;
 //    }
 
-    f\end2('Произошла неописуемая ситуация #' . __LINE__ . ' обратитесь к администратору ' . $e // . $_REQUEST['id'] . ' && ' . $_REQUEST['secret']
-            , 'error');
+    if ($_GET['show'] == 'html') {
+        die('Произошла неописуемая ситуация #' . __LINE__ . ' обратитесь к администратору ' . $e // . $_REQUEST['id'] . ' && ' . $_REQUEST['secret']
+        );
+    } else {
+        f\end2('Произошла неописуемая ситуация #' . __LINE__ . ' обратитесь к администратору ' . $e // . $_REQUEST['id'] . ' && ' . $_REQUEST['secret']
+                , 'error');
+    }
 }
 
 if (isset($_GET['show_request']) && $_GET['show_request'] = 'da') {
     echo '<input type=text value="https://' . $_SERVER['HTTP_HOST'] . '' . $_SERVER['REQUEST_URI'] . '" style="width:100%;padding:3px;" ><br/><br/>';
 }
 
-if (isset($_GET['show_get']) && $_GET['show_get'] = 'da') {
-    echo '<pre>';
-    print_r($_GET);
-    echo '</pre>';
-    echo '<br/><br/>';
-}
 
 //    echo '<pre>'; print_r($_REQUEST); echo '</pre>';
 //    echo '<pre>'; print_r($_SERVER); echo '</pre>';
@@ -75,8 +82,82 @@ foreach (\Nyos\Nyos::$menu as $k => $v) {
 
 
 
+/**
+ * загрузка данных по 1 работнику с даты по дату 
+ * (из боди ссылка в списке учёта времени)
+ */
+if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobman') {
 
-if (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
+    if (isset($_REQUEST['show_timer']))
+        \f\timer::start();
+
+
+    // достаём id iiko для пользователя
+    $user_iiko_id = \Nyos\mod\IikoChecks::getIikoIdFromJobman($db, $_REQUEST['jobman']);
+    //\f\pa($user_iiko_id);
+
+    // достаём чеки с даты по дату
+    $checks_on_server = \Nyos\api\Iiko::loadData('checki_day', $user_iiko_id, $_REQUEST['datestart'], $_REQUEST['datefin']);
+    //\f\pa($checks_on_server, 2, '', '$checks_on_server');
+
+    // получаем чеки человека в этом промежутке дат
+    $checks = \Nyos\mod\IikoChecks::getChecksJobman($db, $_REQUEST['jobman'], $_REQUEST['datestart'], $_REQUEST['datefin']);
+    // \f\pa($checks,2,'','$checks');
+
+    foreach( $checks as $k => $v ){
+        if( !empty($v['dop']['who_add_item']) && $v['dop']['who_add_item'] == 'iiko' ){
+            
+            $ff = $db->prepare('UPDATE mitems SET `status` = \'delete\' WHERE `id` = :id ');
+            $ff->execute( array( ':id' => $v['id'] ) );
+            
+        }
+    }
+    
+    $new_in = 0;
+    
+    foreach( $checks_on_server as $k => $v ) {
+        
+        $indb = array(
+            'jobman' => $_REQUEST['jobman'],
+            'start' => date('Y-m-d H:i:00', strtotime($v['start'])),
+            'who_add_item' => 'iiko'
+        );
+
+        if (!empty($v['end'])) {
+            $indb['fin'] = date('Y-m-d H:i:00', strtotime($v['end']));
+            $indb['hour_on_job_calc'] = \Nyos\mod\IikoChecks::calculateHoursInRange( $v['end'], $v['start'] );
+        }
+
+        \Nyos\mod\items::addNewSimple($db, '050.chekin_checkout', $indb);
+        $new_in ++;
+
+    }
+
+    return \f\end2('загружено периодов '.$new_in.' ' . ( isset($_REQUEST['show_timer']) ? '<br/><br/>' . round(\f\timer::stop(),3).' сек' : '' ), true);
+}
+//
+elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
+
+    //\f\pa($_SERVER);
+
+    if (isset($_GET['show_timer']))
+        \f\timer::start();
+
+    // sleep(3);
+
+    $e = \Nyos\mod\IikoChecks::importChecks($db, $_GET['user']);
+    // \f\pa($e,2,null,'\Nyos\mod\IikoChecks::searchChecks');
+
+    \Nyos\mod\items::addNewSimple($db, '081.job_checks_from_iiko', array(
+        'jobman' => $_GET['user']
+    ));
+
+    if ($_GET['show'] == 'html') {
+        die($e['txt'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ));
+    } else {
+        return \f\end2($e['txt'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true);
+    }
+} elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
 
     //\f\pa($_SERVER);
 
@@ -109,7 +190,6 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
     // sleep(3);
     //$e = \Nyos\mod\IikoChecks::importChecks($db, $_GET['user']);
     // \f\pa($e,2,null,'\Nyos\mod\IikoChecks::searchChecks');
-
     // грузим инфу если с последней загрузки прошло более часа
     $e = \Nyos\mod\IikoChecks::getUserForLoad($db, 'час');
     //\f\pa($e, null, null, '\Nyos\mod\IikoChecks::getUserForLoad($db);');
