@@ -64,9 +64,10 @@ class IikoChecks {
                 . ' mi3.id DESC '
                 . ' , mi2.id DESC '
                 . ' , mid2.value_datetime ASC '
-                . '
-
-                LIMIT 10
+                
+                // . ' LIMIT 10 '
+                
+                .'
                 
                 ;');
 
@@ -85,13 +86,31 @@ class IikoChecks {
     }
 
     /**
-     * считаем сколько часов между двух точек времени
+     * считаем сколько часов между двух точек времени (старая версия, не использовать)
      * @param dt $start
      * @param dt $end
      * @return string
      */
-    public static function calculateHoursInRange(string $start, string $end) {
+    public static function calculateHoursInRange(string $start, $end = null ) {
+        
+        if( $end === null )
+            return null;
+        
         return ceil(( ( ceil(strtotime($start) / 1800) * 1800 ) - ( ceil(strtotime($end) / 1800) * 1800 ) ) / 1800) / 2;
+    }
+
+    /**
+     * считаем количество часов в смене
+     * @param string $start
+     * @param type $end
+     * @return type
+     */
+    public static function calcHoursInSmena(string $start, $end = null ) {
+        
+        if( $end === null )
+            return null;
+        
+        return ceil(( ( ceil(strtotime($end) / 1800) * 1800 ) - ( ceil(strtotime($start) / 1800) * 1800 ) ) / 1800) / 2;
     }
 
     /**
@@ -154,6 +173,7 @@ class IikoChecks {
         return $checks;
     }
 
+    
     /**
      * загружаем чеки с сервера, сравниваем с чеками на сайте и добавляем чего не хватает
      * @param type $array_on_server
@@ -229,8 +249,8 @@ class IikoChecks {
         // $day_checked = 5;
         //$user_id = $_GET['user'];
 
-        if (empty($folder))
-            $folder = \Nyos\Nyos::$folder_now;
+//        if (empty($folder))
+//            $folder = \Nyos\Nyos::$folder_now;
 
         $for_end = '';
 
@@ -261,7 +281,7 @@ class IikoChecks {
                     // ':dates' => $start_date //date( 'Y-m-d', ($_SERVER['REQUEST_TIME'] - 3600 * 24 * 14 ) )
             ));
             $user = $ff->fetch();
-            // \f\pa($user, 2, null, 'user');
+            \f\pa($user, 2, null, 'user');
 
             /**
              * получаем инфу с сервера о чеках
@@ -319,8 +339,9 @@ class IikoChecks {
                                 'value' => $smena_hours,
                             );
 
-                            //\f\pa($rows, 2, null, '$rows');
+                            \f\pa($rows, 2, null, '$rows');
                             \f\db\sql_insert_mnogo($db, 'mitems-dops', $rows, array('id_item' => $v1['id']));
+                            
                         } else {
                             $for_end .= '<br/>' . __LINE__ . ' концы смен сходятся, полностью одинаковые чеки - конец смены ' . $v1['fin'];
                         }

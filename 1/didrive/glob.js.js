@@ -13,8 +13,7 @@ $(document).ready(function () { // вся мaгия пoслe зaгрузки с�
 //  }
 //}
 
-
-    $('body').on('click', '.get_checks', function (event) {
+    $('body').on('click', 'xxx.get_checks', function (event) {
 
         // alert('2323');
 //        $(this).removeClass("show_job_tab");
@@ -100,7 +99,7 @@ $(document).ready(function () { // вся мaгия пoслe зaгрузки с�
         $.ajax({
 
             url: "/vendor/didrive_mod/iiko_checks/ajax.php",
-            data: "t=1" + $uri_query,
+            data: "t=1&t2=1" + $uri_query,
             cache: false,
             dataType: "json",
             type: "post",
@@ -162,7 +161,6 @@ $(document).ready(function () { // вся мaгия пoслe зaгрузки с�
             }
 
         });
-
 
         return false;
 
