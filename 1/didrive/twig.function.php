@@ -4,7 +4,6 @@
   определение функций для TWIG
  */
 //creatSecret
-
 //$function = new Twig_SimpleFunction('getJobmansOnSP', function ( $db, $sp = null, $module_jobman = '070.jobman', $module_sp = 'sale_point', $module_send_jobman_to_sp = 'jobman_send_on_sp'  ) {
 //
 //        $ff = $db->prepare('SELECT 

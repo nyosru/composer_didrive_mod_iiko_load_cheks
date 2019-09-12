@@ -1,7 +1,7 @@
 {
     "name": "didrive_mod/iiko_checks",
     "description": "тащим чекины и ауты",
-    "version": "0.0.7",
+    "version": "0.0.9",
     
     "keywords": [
         "didrive", "module", "nyos", "uralweb.info"
