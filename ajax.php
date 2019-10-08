@@ -833,9 +833,8 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobma
         return \f\end2($e['txt'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true);
     }
 }
-/**
- * 
- */ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all') {
+//
+elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all') {
 
     //\f\pa($_SERVER);
 //    \f\pa($_REQUEST);
@@ -843,7 +842,7 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobma
     ini_set('max_execution_time', 120);
     set_time_limit(120);
 
-    if (isset($_GET['show_timer']))
+    if ( !empty($_GET['show_timer']) )
         \f\timer::start();
 
     // sleep(3);
@@ -866,10 +865,12 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobma
         die($loaded_checks['html']);
     }
 
-    \f\pa($loaded_checks, 2, '', '$loaded_checks');
+    // \f\pa($loaded_checks, 2, '', '$loaded_checks');
 
+    if ( !empty($_GET['show_timer']) ){
     $time_job = \f\timer::stop();
     echo 'timer:' . $time_job;
+    }
 
     $e['txt'] = 'грузим Чекины с ИИКО'
             . PHP_EOL
@@ -903,7 +904,7 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobma
     }
 
     if (!empty($_REQUEST['go_to_after'])) {
-        header('Location: ' . $_REQUEST['go_to_after']);
+        header('Location: ' . $_REQUEST['go_to_after'] );
     }
 
     if (1 == 2) {
