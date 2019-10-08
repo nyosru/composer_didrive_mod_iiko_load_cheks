@@ -55,7 +55,9 @@ foreach (\Nyos\Nyos::$menu as $k => $v) {
     }
 }
 
-
+/**
+ * 
+ */
 if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'get_list6541') {
 
     $dops = array(
@@ -90,8 +92,9 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'get_list6541') {
     exit;
 }
 
-//
-elseif (isset($_REQUEST['action']) && $_REQUEST['action'] == 'get_list654') {
+/**
+ * 
+ */ elseif (isset($_REQUEST['action']) && $_REQUEST['action'] == 'get_list654') {
 
     \f\pa($_REQUEST);
 
@@ -781,8 +784,10 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobma
 
     return \f\end2('загружено периодов ' . $new_in . ' ' . ( isset($_REQUEST['show_timer']) ? '<br/><br/>' . round(\f\timer::stop(), 3) . ' сек' : '' ), true);
 }
-//
-elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
+
+/**
+ * 
+ */ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
 
     //\f\pa($_SERVER);
 
@@ -804,8 +809,9 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
         return \f\end2($e['txt'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true);
     }
 }
-//
-elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
+/**
+ * 
+ */ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
 
     //\f\pa($_SERVER);
 
@@ -827,8 +833,9 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
         return \f\end2($e['txt'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true);
     }
 }
-//
-elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all') {
+/**
+ * 
+ */ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all') {
 
     //\f\pa($_SERVER);
 //    \f\pa($_REQUEST);
@@ -844,7 +851,7 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
     // \f\pa($e,2,null,'\Nyos\mod\IikoChecks::searchChecks');
     // грузим инфу если с последней загрузки прошло более часа
     // $e = \Nyos\mod\IikoChecks::getUserForLoad($db, 'час');
-    
+
     \f\timer::start();
 
     if (isset($_GET['start'])) {
@@ -853,7 +860,12 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
         $d_start = date('Y-m-d', ($_SERVER['REQUEST_TIME'] - 3600 * 24 * 3));
     }
 
-    $loaded_checks = \Nyos\api\Iiko::loadChecksFromServer($db, $d_start);
+    $loaded_checks = \Nyos\api\Iiko::loadChecksFromServer($db, $d_start, ( $_GET['finish'] ?? null));
+
+    if (isset($loaded_checks['html']) && isset($loaded_checks['status']) && $loaded_checks['status'] == 'error') {
+        die($loaded_checks['html']);
+    }
+
     \f\pa($loaded_checks, 2, '', '$loaded_checks');
 
     $time_job = \f\timer::stop();
@@ -861,7 +873,7 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
 
     $e['txt'] = 'грузим Чекины с ИИКО'
             . PHP_EOL
-            . 'с ' . $d_start . ' по ' . date('Y-m-d', $_SERVER['REQUEST_TIME'])
+            . 'с ' . $d_start . ' по ' . ( $_GET['finish'] ?? date('Y-m-d', $_SERVER['REQUEST_TIME']) )
             . PHP_EOL
             . 'загружено чекинов - ' . $loaded_checks['loaded_checks']
             . PHP_EOL
@@ -890,7 +902,9 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
         }
     }
 
-
+    if (!empty($_REQUEST['go_to_after'])) {
+        header('Location: ' . $_REQUEST['go_to_after']);
+    }
 
     if (1 == 2) {
 
