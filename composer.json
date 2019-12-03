@@ -1,11 +1,12 @@
 {
     "name": "didrive_mod/iiko_checks",
     "description": "тащим чекины и ауты",
-    "version": "1.0.0",
+    "version": "1.0.1",
     
     "keywords": [
         "didrive", "module", "nyos", "uralweb.info"
     ],
+
     "authors": [
         {
             "name": "Sergey Baklanov",
@@ -14,7 +15,7 @@
             "role": "Developer"
         }
     ],
-    
+
     "homepage": "https://uralweb.info/php/#classes",
     "license": "MIT",
     "require": {
