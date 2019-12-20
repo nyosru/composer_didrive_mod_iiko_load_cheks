@@ -3,14 +3,19 @@
 // ini_set('display_errors', 'On'); // сообщения с ошибками будут показываться
 // error_reporting(E_ALL); // E_ALL - отображаем ВСЕ ошибки
 
-date_default_timezone_set("Asia/Yekaterinburg");
+if ($_SERVER['HTTP_HOST'] == 'photo.uralweb.info' || $_SERVER['HTTP_HOST'] == 'yapdomik.uralweb.info' || $_SERVER['HTTP_HOST'] == 'a2.uralweb.info' || $_SERVER['HTTP_HOST'] == 'adomik.uralweb.info'
+) {
+    date_default_timezone_set("Asia/Omsk");
+} else {
+    date_default_timezone_set("Asia/Yekaterinburg");
+}
 
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
-//ini_set("max_execution_time", 120);
-//set_time_limit(120);
+ini_set("max_execution_time", 180);
+set_time_limit(180);
 
 define('IN_NYOS_PROJECT', true);
 
@@ -92,10 +97,11 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'get_list6541') {
     exit;
 }
 
-//
+// считаем и показываем расчёты по обороту точки продаж за сутки
 elseif (isset($_REQUEST['action']) && $_REQUEST['action'] == 'get_list654') {
 
-    \f\pa($_REQUEST);
+    if (isset($_REQUEST['show_request']))
+        \f\pa($_REQUEST);
 
     $dops = array(
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
@@ -119,7 +125,7 @@ elseif (isset($_REQUEST['action']) && $_REQUEST['action'] == 'get_list654') {
 //                }
 //$date = '2019-07-12';
 
-    if (!isset($_REQUEST['hide_form'])) {
+    if (empty($_REQUEST['hide_form'])) {
 
         $ll = '
 3c93fc45-485a-46cb-9ee6-0399eb27148f тт7
@@ -162,7 +168,6 @@ b71407a7-d94d-423c-9eb7-e2d2a8884fa3
 
         $list = explode(PHP_EOL, $ll);
 // \f\pa($list,2);
-
 
         echo '<form action="/vendor/didrive_mod/iiko_checks/ajax.php" method=get >
         <input type="date" name="date" value="' . ( $_REQUEST['date'] ?? '' ) . '" >
@@ -215,8 +220,6 @@ b71407a7-d94d-423c-9eb7-e2d2a8884fa3
         <input type=submit value="отправить" >
         </form>';
     }
-    if (isset($_REQUEST['show']))
-        \f\pa($_REQUEST);
 
     if (empty($_REQUEST['date']))
         die('укажите дату');
@@ -731,8 +734,13 @@ b71407a7-d94d-423c-9eb7-e2d2a8884fa3
             echo '</table>';
 
         if (isset($_REQUEST['show'])) {
-            echo '<p>Сумма- : ' . (int) $sum2 . '</p>';
-            echo '<p>Итого- : ' . (int) ( $sum + $sum2 ) . '</p>';
+            echo '<p>'
+            . 'Сумма plus : ' . (int) $sum
+            . '<br/>'
+            . 'Сумма minus : ' . (int) $sum2
+            . '<br/>'
+            . ' Итого : ' . (int) ( $sum + $sum2 )
+            . '</p>';
             exit;
         } else {
             die(\f\end2('получили данные по обороту точки', true, array(
@@ -745,9 +753,11 @@ b71407a7-d94d-423c-9eb7-e2d2a8884fa3
 
     if (empty($_REQUEST['all_id'])) {
 
-        echo '<br/>' . __FILE__ . ' #' . __LINE__;
+        // echo '<br/>' . __FILE__ . ' #' . __LINE__;
         $ee = \Nyos\mod\IikoOborot::scanServerOborot($db, $db7, $_REQUEST['date'], $_REQUEST['sp_key_iiko']);
-    } else {
+    }
+    //
+    else {
 
 //        echo '<br/>'.__FILE__.' #'.__LINE__;
 //        echo '<br/>';
@@ -896,7 +906,7 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
             \f\db\sql_insert_mnogo($db, 'mitems-dops', $return['adds_dop_kolvo_ar']);
 
         unlink($file_cash);
-        
+
         /*
           if (!empty($add)) {
           // \f\pa($add, 2, '', '$add');
