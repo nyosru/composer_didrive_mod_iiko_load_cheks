@@ -166,6 +166,57 @@ b71407a7-d94d-423c-9eb7-e2d2a8884fa3
 7ea67556-6935-4283-83af-f67e0adba56c бердск
         ';
 
+        $ll = '
+6f475233-a2b3-4d64-a173-1bf4831a7fd2
+4c360162-6e12-da32-0145-88f5ce8c0087
+eba3487f-db68-4084-a752-642ae0e73616
+5237f417-19b7-4774-9298-356eccf001b0
+2bc3b2e7-62f7-4839-991e-4789fc5a43b6
+121dbeec-d7fb-4c9c-9966-a2c68e496958
+cc7c9a77-e356-4a2e-b52e-dc88b377e222
+8e5f876b-7b41-45ac-b01b-9311c552bb33
+01d37b65-2399-4453-a8ad-e133026a397f
+3c93fc45-485a-46cb-9ee6-0399eb27148f
+80d0cc1f-233a-432e-9db7-588e73a97e02
+693e7f4f-ebc8-410f-b13e-25b54a62216f
+ce82d80e-8158-4a98-a98d-2ff167d4de6b
+afe2c3ee-e3e5-4b91-9eef-38b61086ad18
+3f7ab84e-4477-4186-9d72-e21c08f6e6d8
+07537f97-f152-490f-9d95-a6a259cab694
+1cacedf6-f411-497b-b44e-18c73b813fd7
+f939f35f-c169-4be9-9933-5af230748ede
+16f98ffb-526e-4562-a7bb-4c3a779b2194
+731c2594-a97e-4db2-90ea-1c9ba8402437
+9e3b1014-9285-415b-9a2d-4073c0598cef
+723d4eec-900d-43e5-86a5-33bfe7d4944d
+f06da035-02f0-49ae-b16f-51f0a1d01b6f
+d12d22b8-753e-4b90-8aeb-d32246ae6057
+593961aa-fcce-495c-82ea-a597d5cf4dd5
+5e55c65f-4ef9-4127-acd3-765cc55a2cc0
+365f9152-1d18-4776-a8c9-2ba39ee4f3cc
+b71407a7-d94d-423c-9eb7-e2d2a8884fa3
+08f510f7-660f-4064-b52a-72a0643761bc
+efac5394-ef56-4c43-adeb-6a849e0024d4
+2a3280c0-7292-415d-8d1f-c47f8cf7b52b
+7ea67556-6935-4283-83af-f67e0adba56c
+48c62350-dc1c-4e3a-929f-de4d7c77c984
+9a720aba-478a-4787-8031-33d8f80a544a
+3ce15261-b48a-4373-b44e-8dbb62274901
+1260ef55-f434-4576-aa03-47077a8ca0d0
+c4126f97-0c57-4220-90b1-4eea97ced6ec
+c8e1e657-510f-43bc-b349-149335d8ae62
+';
+
+        $w = \Nyos\mod\items::getItemsSimple3($db, 'sale_point');
+        //\f\pa($w);
+
+        $ar_key_sp = [];
+        foreach ($w as $kk => $v) {
+
+            if (!empty($v['id_tech_for_oborot']))
+                $ar_key_sp[$v['id_tech_for_oborot']] = $v['head'];
+        }
+
         $list = explode(PHP_EOL, $ll);
 // \f\pa($list,2);
 
@@ -715,6 +766,7 @@ b71407a7-d94d-423c-9eb7-e2d2a8884fa3
                         \f\pa($e);
 
                     $sum2 += $e['sum'];
+                    
                 }
             }
 
@@ -756,6 +808,55 @@ b71407a7-d94d-423c-9eb7-e2d2a8884fa3
         // echo '<br/>' . __FILE__ . ' #' . __LINE__;
         $ee = \Nyos\mod\IikoOborot::scanServerOborot($db, $db7, $_REQUEST['date'], $_REQUEST['sp_key_iiko']);
     }
+    
+    // пробовал несколько дат ... не прокатило
+    elseif (1 == 2) {
+
+        $ee = [];
+
+        for ($p = 0; $p <= 2; $p++) {
+
+            $date = date('Y-m-d', strtotime($_REQUEST['date'] . ' +' . $p . 'day'));
+
+            foreach ($list_id_oborot as $key_id => $v) {
+
+                $e = \Nyos\mod\IikoOborot::scanServerOborot($db, $db7, $date, $key_id);
+                $ee[$key_id][$date] = $e['data'];
+                $e = [];
+
+            }
+        }
+
+\f\pa($ee);
+
+
+exit;
+
+//        echo '<br/>'.__FILE__.' #'.__LINE__;
+//        echo '<br/>';
+//        echo '<br/>';
+
+        echo '<table><tr><td>точки</td><td>' . $_REQUEST['date'] . '</td></tr>';
+
+// \f\pa($list_id_oborot);
+        foreach ($list_id_oborot as $key_id => $v) {
+
+            $ee = \Nyos\mod\IikoOborot::scanServerOborot($db, $db7, $_REQUEST['date'], $key_id);
+// \f\pa($ee, '', '', 'результат \Nyos\mod\IikoOborot::scanServerOborot');
+
+            if (!empty($ar_key_sp[$key_id]))
+                continue;
+
+            echo '<tr><td>'
+            . ( $ar_key_sp[$key_id] ?? '' ) . ' / '
+            . ( $v == $key_id ? $key_id : $v . ' (' . $key_id . ')' )
+            . '</td>'
+            . '<td>' . $ee['data']['oborot'] . '</td>'
+            . '</tr>';
+        }
+
+        echo '</table>';
+    }
     //
     else {
 
@@ -771,7 +872,15 @@ b71407a7-d94d-423c-9eb7-e2d2a8884fa3
             $ee = \Nyos\mod\IikoOborot::scanServerOborot($db, $db7, $_REQUEST['date'], $key_id);
 // \f\pa($ee, '', '', 'результат \Nyos\mod\IikoOborot::scanServerOborot');
 
-            echo '<tr><td>' . ( $v == $key_id ? $key_id : $v . ' (' . $key_id . ')' ) . '</td><td>' . $ee['data']['oborot'] . '</td></tr>';
+            if (!empty($ar_key_sp[$key_id]))
+                continue;
+
+            echo '<tr><td>'
+            . ( $ar_key_sp[$key_id] ?? '' ) . ' / '
+            . ( $v == $key_id ? $key_id : $v . ' (' . $key_id . ')' )
+            . '</td>'
+            . '<td>' . $ee['data']['oborot'] . '</td>'
+            . '</tr>';
         }
 
         echo '</table>';

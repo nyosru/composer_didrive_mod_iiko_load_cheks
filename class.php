@@ -64,10 +64,9 @@ class IikoChecks {
                 . ' mi3.id DESC '
                 . ' , mi2.id DESC '
                 . ' , mid2.value_datetime ASC '
-                
+
                 // . ' LIMIT 10 '
-                
-                .'
+                . '
                 
                 ;');
 
@@ -87,16 +86,35 @@ class IikoChecks {
 
     /**
      * считаем сколько часов между двух точек времени (старая версия, не использовать)
+     * ( обновлённая версия 1912201602 > calculateHoursInRangeUnix )
      * @param dt $start
      * @param dt $end
      * @return string
      */
-    public static function calculateHoursInRange(string $start, $end = null ) {
-        
-        if( $end === null )
+    public static function calculateHoursInRange(string $start, $end = null) {
+
+        if ($end === null)
             return null;
-        
+
         return ceil(( ( ceil(strtotime($start) / 1800) * 1800 ) - ( ceil(strtotime($end) / 1800) * 1800 ) ) / 1800) / 2;
+    }
+
+    /**
+     * считаем сколько времени отталкиваясь от юникс дат (в секундах)
+     * версия от 1912201602
+     * @param string $start
+     * @param type $end
+     * @return type
+     */
+    public static function calculateHoursInRangeUnix($start, $end) {
+
+        if (!empty($start) && is_numeric($start) && !empty($end) && is_numeric($end)) {
+            return ceil(( ( ceil($end / 1800) * 1800 ) - ( ceil($start / 1800) * 1800 ) ) / 1800) / 2;
+        } 
+        // ошибка или пришли не цифры или пустые значения
+        else {
+            return null;
+        }
     }
 
     /**
@@ -105,11 +123,11 @@ class IikoChecks {
      * @param type $end
      * @return type
      */
-    public static function calcHoursInSmena(string $start, $end = null ) {
-        
-        if( $end === null )
+    public static function calcHoursInSmena(string $start, $end = null) {
+
+        if ($end === null)
             return null;
-        
+
         return ceil(( ( ceil(strtotime($end) / 1800) * 1800 ) - ( ceil(strtotime($start) / 1800) * 1800 ) ) / 1800) / 2;
     }
 
@@ -173,7 +191,6 @@ class IikoChecks {
         return $checks;
     }
 
-    
     /**
      * загружаем чеки с сервера, сравниваем с чеками на сайте и добавляем чего не хватает
      * @param type $array_on_server
@@ -218,22 +235,22 @@ class IikoChecks {
      * @param type $mod_checks
      * @return type
      */
-    public static function getChecksJobman($db, int $user_id, string $date_start, string $date_fin, $mod_checks = '050.chekin_checkout' ) {
+    public static function getChecksJobman($db, int $user_id, string $date_start, string $date_fin, $mod_checks = '050.chekin_checkout') {
 
         // начинаем сравнивать что есть чего нет
         \Nyos\mod\items::$sql_itemsdop_add_where_array = array(
             ':man' => $user_id
             ,
-            ':datestart' => date('Y-m-d 00:00:00', strtotime($date_start) )
+            ':datestart' => date('Y-m-d 00:00:00', strtotime($date_start))
             ,
-            ':datefin' => date('Y-m-d 23:59:00', strtotime($date_fin) )
+            ':datefin' => date('Y-m-d 23:59:00', strtotime($date_fin))
         );
         $checki = \Nyos\mod\items::$sql_itemsdop2_add_where = '
             INNER JOIN `mitems-dops` m1 ON m1.id_item = mi.id AND m1.name = \'jobman\' AND m1.value = :man
             INNER JOIN `mitems-dops` m2 ON m2.id_item = mi.id AND m2.name = \'start\' AND m2.value_datetime >= :datestart
             INNER JOIN `mitems-dops` m3 ON m3.id_item = mi.id AND m3.name = \'start\' AND m3.value_datetime <= :datefin
             ';
-        $checki = \Nyos\mod\items::getItemsSimple($db, $mod_checks , 'show');
+        $checki = \Nyos\mod\items::getItemsSimple($db, $mod_checks, 'show');
         // \f\pa($checki, 2, '', '$checki');
 
         return $checki['data'];
@@ -248,7 +265,6 @@ class IikoChecks {
 
         // $day_checked = 5;
         //$user_id = $_GET['user'];
-
 //        if (empty($folder))
 //            $folder = \Nyos\Nyos::$folder_now;
 
@@ -341,7 +357,6 @@ class IikoChecks {
 
                             \f\pa($rows, 2, null, '$rows');
                             \f\db\sql_insert_mnogo($db, 'mitems-dops', $rows, array('id_item' => $v1['id']));
-                            
                         } else {
                             $for_end .= '<br/>' . __LINE__ . ' концы смен сходятся, полностью одинаковые чеки - конец смены ' . $v1['fin'];
                         }
