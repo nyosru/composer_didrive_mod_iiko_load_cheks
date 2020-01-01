@@ -766,7 +766,6 @@ c8e1e657-510f-43bc-b349-149335d8ae62
                         \f\pa($e);
 
                     $sum2 += $e['sum'];
-                    
                 }
             }
 
@@ -808,7 +807,7 @@ c8e1e657-510f-43bc-b349-149335d8ae62
         // echo '<br/>' . __FILE__ . ' #' . __LINE__;
         $ee = \Nyos\mod\IikoOborot::scanServerOborot($db, $db7, $_REQUEST['date'], $_REQUEST['sp_key_iiko']);
     }
-    
+
     // пробовал несколько дат ... не прокатило
     elseif (1 == 2) {
 
@@ -823,14 +822,13 @@ c8e1e657-510f-43bc-b349-149335d8ae62
                 $e = \Nyos\mod\IikoOborot::scanServerOborot($db, $db7, $date, $key_id);
                 $ee[$key_id][$date] = $e['data'];
                 $e = [];
-
             }
         }
 
-\f\pa($ee);
+        \f\pa($ee);
 
 
-exit;
+        exit;
 
 //        echo '<br/>'.__FILE__.' #'.__LINE__;
 //        echo '<br/>';
@@ -941,9 +939,8 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobma
     return \f\end2('загружено периодов ' . $new_in . ' ' . ( isset($_REQUEST['show_timer']) ? '<br/><br/>' . round(\f\timer::stop(), 3) . ' сек' : '' ), true);
 }
 
-/**
- * 
- */ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
+//
+elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
 
 //\f\pa($_SERVER);
 
@@ -968,9 +965,8 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobma
         return \f\end2($e['txt'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true);
     }
 }
-/**
- * 
- */ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
+//
+elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh') {
 
 //\f\pa($_SERVER);
 
@@ -992,149 +988,140 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'load_checks_for_1jobma
         return \f\end2($e['txt'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true);
     }
 }
+
+
+
 //
 elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all') {
 
-    $file_cash = dirname(__FILE__) . '/read48_and_refresh_all.json.cash';
-    \f\timer::start();
-
-    if (file_exists($file_cash)) {
-
-        $return = json_decode(file_get_contents($file_cash), true);
-        // \f\pa($return, 2);
-
-        $e['txt'] = 'есть файл данных экспорта из ИИКО, пишем данные в нашу БД';
-
-        if (!empty($return['adds']))
-            \Nyos\mod\items::addNewSimples($db, '050.chekin_checkout', $return['adds']);
-
-        if (!empty($return['adds_start_ar']))
-            \Nyos\mod\items::addNewSimples($db, '050.chekin_checkout', $return['adds_start_ar']);
-
-        if (!empty($return['adds_dop_kolvo_ar']))
-            \f\db\sql_insert_mnogo($db, 'mitems-dops', $return['adds_dop_kolvo_ar']);
-
-        unlink($file_cash);
-
-        /*
-          if (!empty($add)) {
-          // \f\pa($add, 2, '', '$add');
-          $return['adds_kolvo'] = sizeof($add);
-          $return['adds'] = $add;
-          // \Nyos\mod\items::addNewSimples( $db, '050.chekin_checkout', $add );
-          } else {
-          $return['adds_kolvo'] = 0;
-          }
-
-          // \f\pa($add_new, 2, '', '$add_new');
-          if (!empty($add_new)) {
-          $return['adds_start'] = sizeof($add_new);
-          $return['adds_start_ar'] = $add_new;
-          // \Nyos\mod\items::addNewSimples($db, '050.chekin_checkout', $add_new);
-          } else {
-          $return['adds_start'] = 0;
-          }
-
-          // \f\pa($dop_add, 2, '', '$dop_add');
-          if (!empty($dop_add)) {
-          $return['adds_dop_kolvo'] = sizeof($dop_add) / 2;
-          $return['adds_dop_kolvo_ar'] = $dop_add;
-          // \f\db\sql_insert_mnogo($db, 'mitems-dops', $dop_add);
-          // \f\pa($dop_add, 2, '', '$dop_add');
-          } else {
-          $return['adds_dop_kolvo'] = 0;
-          }
-         */
-    }
-    //
-    else {
 
 
+//    $file_cash = dirname(__FILE__) . '/read48_and_refresh_all.json.cash';
+    \f\timer_start(95);
 
-//\f\pa($_SERVER);
-//    \f\pa($_REQUEST);
-//    ini_set('max_execution_time', 120);
-//    set_time_limit(120);
-        //if (!empty($_GET['show_timer']))
-// sleep(3);
-//$e = \Nyos\mod\IikoChecks::importChecks($db, $_GET['user']);
-// \f\pa($e,2,null,'\Nyos\mod\IikoChecks::searchChecks');
-// грузим инфу если с последней загрузки прошло более часа
-// $e = \Nyos\mod\IikoChecks::getUserForLoad($db, 'час');
-//    \f\timer::start();
-
-        if (isset($_GET['start'])) {
-            $d_start = date('Y-m-d', strtotime($_GET['start']));
-        } else {
-            $d_start = date('Y-m-d', ($_SERVER['REQUEST_TIME'] - 3600 * 24 * 3));
-        }
-
-        $loaded_checks = \Nyos\api\Iiko::loadChecksFromServer($db, $d_start, ( $_GET['finish'] ?? null));
-
-//    unset($db);
-//    require( $_SERVER['DOCUMENT_ROOT'] . '/all/ajax.start.php' );
-        // \f\pa($loaded_checks, 2, '', '$loaded_checks');
-
-        file_put_contents($file_cash, json_encode($loaded_checks));
-
-//    if (!empty($loaded_checks['adds'])) {
-//
-//        foreach ($loaded_checks['adds'] as $k1 => $v1) {
-//            \Nyos\mod\items::addNew($db, \Nyos\Nyos::$folder_now, \Nyos\Nyos::$menu['050.chekin_checkout'], $v1);
-//            break;
-//        }
-//
-//// \Nyos\mod\items::addNewSimples( $db, '050.chekin_checkout', $loaded_checks['adds'] );
-//    }
-
-        if (isset($loaded_checks['html']) && isset($loaded_checks['status']) && $loaded_checks['status'] == 'error') {
-            die($loaded_checks['html']);
-        }
-
-//    \f\pa($loaded_checks, 2, '', '$loaded_checks');
-//flush();
-// ob_flush();
-
-
-        $e['txt'] = 'грузим Чекины с ИИКО (тащим с удаленной базы данных, следующий запуск запишем что загрузили)'
-                . PHP_EOL
-                . 'с ' . $d_start . ' по ' . ( $_GET['finish'] ?? date('Y-m-d', $_SERVER['REQUEST_TIME']) )
-                . PHP_EOL
-                . 'загружено чекинов - ' . $loaded_checks['loaded_checks']
-                . PHP_EOL
-                . 'добавлено стартов смен - ' . $loaded_checks['adds_start']
-                . PHP_EOL
-                . 'добавлено полных смен - ' . $loaded_checks['adds_kolvo']
-                . PHP_EOL
-                . 'дополнено ранее открытых смен - ' . $loaded_checks['adds_dop_kolvo']
-        ;
+    if (isset($_GET['start'])) {
+        $d_start = date('Y-m-d', strtotime($_GET['start']));
+    } else {
+        $d_start = date('Y-m-d', ($_SERVER['REQUEST_TIME'] - 3600 * 24 * 3));
     }
 
+    $loaded_checks = \Nyos\api\Iiko::loadChecksFromServer($db, $d_start, ( $_GET['finish'] ?? null));
+    // $loaded_checks = [];
+    // \f\pa($loaded_checks, '', '', '$loaded_checks');
 
-    $time_job = \f\timer::stop();
+    if (isset($loaded_checks['html']) && isset($loaded_checks['status']) && $loaded_checks['status'] == 'error') {
+        die($loaded_checks['html']);
+    }
+
+//        $e['txt'] = 'грузим Чекины с ИИКО (тащим с удаленной базы данных, следующий запуск запишем что загрузили)'
+    $e['txt'] = 'грузим Чекины с ИИКО ( тащим с удаленной базы данных и пишем в нашу БД )'
+            . PHP_EOL
+            . 'с ' . $d_start . ' по ' . ( $_GET['finish'] ?? date('Y-m-d', $_SERVER['REQUEST_TIME']) )
+            . PHP_EOL
+            . 'загружено чекинов - ' . $loaded_checks['loaded_checks']
+            . PHP_EOL
+            . 'добавлено стартов смен - ' . $loaded_checks['adds_start']
+            . PHP_EOL
+            . 'добавлено полных смен - ' . $loaded_checks['adds_kolvo']
+            . PHP_EOL
+            . 'дополнено ранее открытых смен - ' . $loaded_checks['adds_dop_kolvo']
+    ;
+
+    $e['txt'] .= PHP_EOL . 'пишем данные в локальную БД (если есть что писать)';
+
+    if (!empty($loaded_checks['adds']))
+        \Nyos\mod\items::addNewSimples($db, '050.chekin_checkout', $loaded_checks['adds']);
+
+    if (!empty($loaded_checks['adds_start_ar']))
+        \Nyos\mod\items::addNewSimples($db, '050.chekin_checkout', $loaded_checks['adds_start_ar']);
+
+    if (!empty($loaded_checks['adds_dop_kolvo_ar']))
+        \f\db\sql_insert_mnogo($db, 'mitems-dops', $loaded_checks['adds_dop_kolvo_ar']);
+
+    $time_job = \f\timer_stop(95, 'str');
+    $time_job2 = \f\timer_stop(95, 'ar');
 
     if (!empty($_GET['show_timer'])) {
         echo 'timer:' . $time_job;
     }
 
-    $e['txt'] .= PHP_EOL . 'время выполнения ' . $time_job . ' сек ';
+    $e['txt'] .= PHP_EOL . 'выполнение ' . $time_job . ' ';
 
-    if (1 == 1 && class_exists('\\Nyos\\Msg')) {
+    $loaded_checks['sec'] = $time_job2['sec'];
+    $loaded_checks['memory'] = $time_job2['memory'];
 
-        if (!isset($vv['admin_ajax_job'])) {
-            require_once DR . '/sites/' . \Nyos\nyos::$folder_now . '/config.php';
+    $new_file_dir = DR . DS . 'sites' . DS . \Nyos\Nyos::$folder_now . DS;
+    $new_file = $new_file_dir . 'checks_calculate.' . date('Y-m-d_H.i.s') . '.tmp.json';
+    file_put_contents($new_file, json_encode($loaded_checks));
+
+    $send_msg_list = false;
+
+    $list_file = scandir($new_file_dir);
+
+    foreach ($list_file as $k) {
+        if ( strpos($k, 'checks_calculate.') !== false && filemtime(  $new_file_dir.$k ) > 6*3600 ) {
+            // echo '<Br/>'.$k;
+            $send_msg_list = true;
+            break;
+        }
+    }
+
+    if ($send_msg_list === true) {
+
+        $txt = 'Отчёт о проведённых выгрузках и обработках Check in/out';
+
+        $all =
+        $massa = [];
+        
+        foreach ($list_file as $k) {
+            if (strpos($k, 'checks_calculate.') !== false) {
+                // echo '<Br/>'.$k;
+//            $send_msg_list = true;
+//            break;
+                $m = json_decode(file_get_contents($new_file_dir . $k), true);
+                $m['dt'] = date('Y-m-d H:i', filemtime($new_file_dir . $k));
+                $massa[] = $m;
+                $all['loaded_people'] += $m['loaded_people'];
+                $all['loaded_job_checks'] += $m['loaded_job_checks'];
+                $all['sec'] += $m['sec'];
+                
+                unlink($new_file_dir . $k);
+                
+            }
         }
 
-        $txt = $e['txt'];
+        $txt .= PHP_EOL . 'обработано сотрудников (возможны повторы): ' . $all['loaded_people']
+                . PHP_EOL . 'проверенных чекинов: ' . $all['loaded_job_checks']
+                . PHP_EOL . 'кол-во обработок: ' . sizeof($massa)
+                . PHP_EOL . 'компьютерное время: ' . round($all['sec'] / 60, 1) . ' мин';
 
-        \nyos\Msg::sendTelegramm($txt, null, 1);
+        // \f\pa($massa);
 
-        if (isset($vv['admin_ajax_job'])) {
-            foreach ($vv['admin_ajax_job'] as $k => $v) {
-                \Nyos\Msg::sendTelegramm($txt, $v);
+        if (1 == 1 && class_exists('\\Nyos\\Msg')) {
+
+            if (!isset($vv['admin_ajax_job'])) {
+                require_once DR . '/sites/' . \Nyos\nyos::$folder_now . '/config.php';
+            }
+
+            // $txt = $e['txt'];
+
+            \nyos\Msg::sendTelegramm($txt, null, 1);
+
+            if (isset($vv['admin_ajax_job'])) {
+                foreach ($vv['admin_ajax_job'] as $k => $v) {
+                    \Nyos\Msg::sendTelegramm($txt, $v);
+                }
             }
         }
     }
+
+
+
+
+
+
+
+
 
     if (!empty($_REQUEST['go_to_after'])) {
         header('Location: ' . $_REQUEST['go_to_after']);
@@ -1168,7 +1155,7 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
     if (isset($_REQUEST['show']) && $_REQUEST['show'] == 'html') {
         die($e['txt'] ?? $e['html'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ) );
     } else {
-        return \f\end2($e['txt'] ?? $e['html'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true);
+        return \f\end2($e['txt'] ?? $e['html'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true, $loaded_checks);
     }
 }
 
