@@ -1052,14 +1052,14 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
 
     $new_file_dir = DR . DS . 'sites' . DS . \Nyos\Nyos::$folder_now . DS;
     $new_file = $new_file_dir . 'checks_calculate.' . date('Y-m-d_H.i.s') . '.tmp.json';
-    file_put_contents($new_file, json_encode($loaded_checks));
+    file_put_contents( $new_file, json_encode($loaded_checks) );
 
     $send_msg_list = false;
 
     $list_file = scandir($new_file_dir);
 
     foreach ($list_file as $k) {
-        if ( strpos($k, 'checks_calculate.') !== false && filemtime(  $new_file_dir.$k ) > 6*3600 ) {
+        if ( strpos($k, 'checks_calculate.') !== false && filemtime(  $new_file_dir.$k ) < $_SERVER['REQUEST_TIME'] - 6*3600 ) {
             // echo '<Br/>'.$k;
             $send_msg_list = true;
             break;
@@ -1070,7 +1070,11 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
 
         $txt = 'Отчёт о проведённых выгрузках и обработках Check in/out';
 
-        $all =
+        $all = [
+            'loaded_people' => 0,
+            'loaded_job_checks' => 0,
+            'sec' => 0
+        ];
         $massa = [];
         
         foreach ($list_file as $k) {
@@ -1152,11 +1156,18 @@ elseif (isset($_REQUEST['act2']) && $_REQUEST['act2'] == 'read48_and_refresh_all
         }
     }
 
+    
     if (isset($_REQUEST['show']) && $_REQUEST['show'] == 'html') {
+        
+        \f\pa($loaded_checks,'','','$loaded_checks');
         die($e['txt'] ?? $e['html'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ) );
+        
     } else {
+        
         return \f\end2($e['txt'] ?? $e['html'] . ( isset($_GET['show_timer']) ? '<br/><br/>выполнялось секунд: ' . \f\timer::stop() : '' ), true, $loaded_checks);
+        
     }
+    
 }
 
 
