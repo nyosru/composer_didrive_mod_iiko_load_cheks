@@ -94,7 +94,7 @@ try {
 
             // if( empty( $checks_on_server ) )
             $checks_on_server = \Nyos\api\Iiko::loadData('checki_day', $v['iiko_id'], date('Y-m-d', $_SERVER['REQUEST_TIME'] - 3600 * 24 * $scan_day));
-            // \f\pa($checks_on_server, 2, '', '$checks_on_server');
+            //\f\pa($checks_on_server, 2, '', '$checks_on_server');
 
             $jms[] = $v['id'];
             $jms_ar__jm_d[$v['id']] = $checks_on_server;
