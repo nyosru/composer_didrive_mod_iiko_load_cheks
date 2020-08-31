@@ -24,6 +24,50 @@ try {
     if (isset($_GET['show_timer']))
         \f\timer::start();
 
+
+    $sql = 'SELECT 
+                id,
+                c.start,
+                c.fin,
+                c.hour_on_job
+            FROM 
+                mod_050_chekin_checkout c 
+            WHERE 
+                c.start IS NOT NULL 
+                AND
+                c.fin IS NOT NULL
+                AND
+                c.hour_on_job IS NULL
+            ORDER BY id DESC
+            LIMIT 50
+            ';
+    $ff = $db->prepare($sql);
+//    $in[':d1'] = date('Y-m-d 05:00:00', $_SERVER['REQUEST_TIME'] - 3600 * 24 * $scan_day);
+//    $ff->execute($in);
+    $ff->execute();
+    // \f\pa($ff->fetchAll());
+    while ($d = $ff->fetch()) {
+
+        \f\pa($d);
+
+        $dif = strtotime($d['fin']) - strtotime($d['start']);
+        \f\pa($dif);
+        if ($dif > 60 * 30) {
+            
+            $new_hours = \Nyos\mod\IikoChecks::calcHoursInSmena($d['start'], $d['fin']);
+            \f\pa($new_hours);
+            
+        } else {
+            
+            echo '<br/>пропускаем';
+            \f\db\db_edit2($db, 'mod_' . \f\translit(\Nyos\mod\JobDesc::$mod_checks, 'uri2'), [ 'id' => $d['id'] ], [ 'hour_on_job' => 1 ] );
+        }
+    }
+
+
+
+    die('234');
+
 // sleep(3);
 //     $ww = \Nyos\mod\items::getItemsSimple3($db, '081.job_checks_from_iiko' );
 //     \f\pa($ww);
@@ -44,11 +88,6 @@ try {
 //        }
 //    }
 
-    if (isset($_REQUEST['user'])) {
-        $sql2 = ' jm.id = :user ';
-        $in[':user'] = $_REQUEST['user'];
-    }
-
     $sql = 'SELECT 
                 jm.id, '
             // .' jm.head, '
@@ -56,17 +95,12 @@ try {
                 c.`id` `check`
             FROM mod_070_jobman jm
             INNER JOIN mod_050_chekin_checkout c ON c.jobman = jm.id AND c.start >= :d1
-            ' . (!empty($sql2) ? ' WHERE ' . $sql2 : '' ) . '
             GROUP BY jm.id
             ';
     $ff = $db->prepare($sql);
     $in[':d1'] = date('Y-m-d 05:00:00', $_SERVER['REQUEST_TIME'] - 3600 * 24 * $scan_day);
     $ff->execute($in);
     $load_iiko_users = $ff->fetchAll();
-
-    if (isset($_REQUEST['show'])) {
-        \f\pa($load_iiko_users, 2, '', '$load_iiko_users');
-    }
 
     foreach (\Nyos\Nyos::$menu as $k => $v) {
         if ($v['type'] == 'iiko_checks' && $v['version'] == 1) {
@@ -97,11 +131,7 @@ try {
 //        \f\pa($v);
 //        break;
 
-        if (isset($_REQUEST['user']) && $_REQUEST['user'] == $v['id']) {
-            $skip = '';
-        } else {
-            $skip = \f\Cash::getVar($var_cash . $v['id']);
-        }
+        $skip = \f\Cash::getVar($var_cash . $v['id']);
         // $skip = [];
         // \f\pa($skip);
 
@@ -109,10 +139,7 @@ try {
 
             // if( empty( $checks_on_server ) )
             $checks_on_server = \Nyos\api\Iiko::loadData('checki_day', $v['iiko_id'], date('Y-m-d', $_SERVER['REQUEST_TIME'] - 3600 * 24 * $scan_day));
-
-            if (isset($_REQUEST['show'])) {
-                \f\pa($checks_on_server, 2, '', '$checks_on_server');
-            }
+            //\f\pa($checks_on_server, 2, '', '$checks_on_server');
 
             $jms[] = $v['id'];
             $jms_ar__jm_d[$v['id']] = $checks_on_server;
@@ -140,8 +167,6 @@ try {
     if (empty($jms))
         die('нечего грузить');
 
-    $in = [];
-
     $sql = 'SELECT 
             c.id,
             c.jobman,
@@ -151,7 +176,7 @@ try {
             mod_050_chekin_checkout c
         WHERE
             start >= :d1 AND
-            jobman IN ( ' . ( sizeof($jms) > 1 ? implode(',', $jms) : implode('', $jms) ) . ' )
+            jobman IN ( ' . implode(',', $jms) . ' )
         ';
 
     // \f\pa($sql);
@@ -198,12 +223,9 @@ try {
                     $new_add = false;
 
                     if (!empty($new['end']) && $in['fin'] != $new['end']) {
-
-                        $hours = \Nyos\mod\IikoChecks::calcHoursInSmena($new['start'], $new['end']);
-
                         $new_finish[$in['id']] = [
                             'fin' => $new['end'],
-                            'hour_on_job' => ( $hours > 0 ? $hours : 1 )
+                            'hour_on_job' => \Nyos\mod\IikoChecks::calcHoursInSmena($new['start'], $new['end'])
                         ];
                     }
                 }
@@ -215,11 +237,8 @@ try {
                 if (!empty($item['end']))
                     $add['fin'] = $item['end'];
 
-                if (!empty($add['start']) && !empty($add['fin'])) {
-                    $hours = \Nyos\mod\IikoChecks::calcHoursInSmena($add['start'], $add['fin']);
-                    // $add['hour_on_job'] = \Nyos\mod\IikoChecks::calcHoursInSmena($add['start'], $add['fin']);
-                    $add['hour_on_job'] = ( $hours > 0 ? $hours : 1 );
-                }
+                if (!empty($add['start']) && !empty($add['fin']))
+                    $add['hour_on_job'] = \Nyos\mod\IikoChecks::calcHoursInSmena($add['start'], $add['fin']);
 
                 $adds[] = $add;
             }
@@ -230,25 +249,16 @@ try {
 
     echo PHP_EOL . 'добавляем :' . sizeof($adds);
     if (!empty($adds)) {
-
-        if (isset($_REQUEST['nosave'])) {
-            \f\pa([$adds, ['who_add_item' => 'iiko']]);
-        } else {
-            \Nyos\mod\items::adds($db, \Nyos\mod\JobDesc::$mod_checks, $adds, ['who_add_item' => 'iiko']);
-        }
+        \Nyos\mod\items::adds($db, \Nyos\mod\JobDesc::$mod_checks, $adds, ['who_add_item' => 'iiko']);
     }
 
     echo PHP_EOL . 'изменяем :' . sizeof($new_finish);
 
     if (!empty($new_finish)) {
         foreach ($new_finish as $id => $v) {
-            if (isset($_REQUEST['nosave'])) {
-                \f\pa([ $id, $v ]);
-            } else {
-                $e = \f\db\db_edit2($db, 'mod_' . \f\translit(\Nyos\mod\JobDesc::$mod_checks, 'uri2'), ['id' => $id], $v);
-                // \f\pa([$id, $v]);
-                // break;
-            }
+            $e = \f\db\db_edit2($db, 'mod_' . \f\translit(\Nyos\mod\JobDesc::$mod_checks, 'uri2'), ['id' => $id], $v);
+            \f\ppa([$id, $v]);
+            break;
         }
     }
 
