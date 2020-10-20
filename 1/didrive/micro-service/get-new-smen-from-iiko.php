@@ -44,6 +44,22 @@ try {
 //        }
 //    }
 
+if (isset($_REQUEST['user_scan_all'])) {    
+    
+    $sql = 'SELECT 
+                jm.id, '
+            // .' jm.head, '
+            . ' jm.iiko_id ,
+                \'1\' `check`
+            FROM mod_070_jobman jm
+            GROUP BY jm.id
+            ';
+    $ff = $db->prepare($sql);
+    $ff->execute();
+    $load_iiko_users = $ff->fetchAll();
+    
+    
+}else{
     if (isset($_REQUEST['user'])) {
         $sql2 = ' jm.id = :user ';
         $in[':user'] = $_REQUEST['user'];
@@ -63,6 +79,7 @@ try {
     $in[':d1'] = date('Y-m-d 05:00:00', $_SERVER['REQUEST_TIME'] - 3600 * 24 * $scan_day);
     $ff->execute($in);
     $load_iiko_users = $ff->fetchAll();
+}
 
     if (isset($_REQUEST['show'])) {
         \f\pa($load_iiko_users, 2, '', '$load_iiko_users');
