@@ -19,7 +19,8 @@ try {
 
     $scan_day = ( $_REQUEST['scan_day'] ?? 3 );
 
-//\f\pa($_SERVER);
+    if (isset($_REQUEST['show']))
+        \f\pa($_REQUEST, '', '', 'REQUEST');
 
     if (isset($_GET['show_timer']))
         \f\timer::start();
@@ -44,42 +45,61 @@ try {
 //        }
 //    }
 
-if (isset($_REQUEST['user_scan_all'])) {    
-    
-    $sql = 'SELECT 
+    if (isset($_REQUEST['user_scan_all'])) {
+
+        $sql = 'SELECT 
                 jm.id, '
-            // .' jm.head, '
-            . ' jm.iiko_id ,
+                // .' jm.head, '
+                . ' jm.iiko_id ,
                 \'1\' `check`
             FROM mod_070_jobman jm
             GROUP BY jm.id
             ';
-    $ff = $db->prepare($sql);
-    $ff->execute();
-    $load_iiko_users = $ff->fetchAll();
-    
-    
-}else{
-    if (isset($_REQUEST['user'])) {
-        $sql2 = ' jm.id = :user ';
-        $in[':user'] = $_REQUEST['user'];
-    }
+        $ff = $db->prepare($sql);
+        $ff->execute();
+        $load_iiko_users = $ff->fetchAll();
+    } 
+    //
+    else {
 
-    $sql = 'SELECT 
+        if (isset($_REQUEST['user'])) {
+            $sql2 = ' jm.id = :user ';
+            $in[':user'] = $_REQUEST['user'];
+        }
+
+        $sql = ' ( SELECT 
                 jm.id, '
-            // .' jm.head, '
-            . ' jm.iiko_id ,
+                // .' jm.head, '
+                . ' jm.iiko_id ,
                 c.`id` `check`
             FROM mod_070_jobman jm
             INNER JOIN mod_050_chekin_checkout c ON c.jobman = jm.id AND c.start >= :d1
             ' . (!empty($sql2) ? ' WHERE ' . $sql2 : '' ) . '
             GROUP BY jm.id
+            ) UNION ( SELECT 
+                jm.id, '
+                // .' jm.head, '
+                . ' jm.iiko_id ,
+                c.`id` `check`
+            FROM mod_070_jobman jm
+            INNER JOIN mod_jobman_send_on_sp c ON c.jobman = jm.id AND c.date >= :d1
+            ' . (!empty($sql2) ? ' WHERE ' . $sql2 : '' ) . '
+            GROUP BY jm.id
+            )
             ';
-    $ff = $db->prepare($sql);
-    $in[':d1'] = date('Y-m-d 05:00:00', $_SERVER['REQUEST_TIME'] - 3600 * 24 * $scan_day);
-    $ff->execute($in);
-    $load_iiko_users = $ff->fetchAll();
-}
+
+        if (isset($_REQUEST['show']))
+            \f\pa($sql, 2, '', 'sql');
+
+        $ff = $db->prepare($sql);
+        $in[':d1'] = date('Y-m-d', $_SERVER['REQUEST_TIME'] - 3600 * 24 * $scan_day);
+
+        if (isset($_REQUEST['show']))
+            \f\pa($in, 2, '', '$in');
+
+        $ff->execute($in);
+        $load_iiko_users = $ff->fetchAll();
+    }
 
     if (isset($_REQUEST['show'])) {
         \f\pa($load_iiko_users, 2, '', '$load_iiko_users');
@@ -243,9 +263,12 @@ if (isset($_REQUEST['user_scan_all'])) {
         }
     }
 
-    echo '<pre>';
+    $return = [];
+    
+    // echo '<pre>';
 
-    echo PHP_EOL . 'добавляем :' . sizeof($adds);
+    // echo PHP_EOL . 'добавляем :' . sizeof($adds);
+    $return['added'] = sizeof($adds);
     if (!empty($adds)) {
 
         if (isset($_REQUEST['nosave'])) {
@@ -255,12 +278,13 @@ if (isset($_REQUEST['user_scan_all'])) {
         }
     }
 
-    echo PHP_EOL . 'изменяем :' . sizeof($new_finish);
+    // echo PHP_EOL . 'изменяем :' . sizeof($new_finish);
+    $return['edited'] = sizeof($new_finish);
 
     if (!empty($new_finish)) {
         foreach ($new_finish as $id => $v) {
             if (isset($_REQUEST['nosave'])) {
-                \f\pa([ $id, $v ]);
+                \f\pa([$id, $v]);
             } else {
                 $e = \f\db\db_edit2($db, 'mod_' . \f\translit(\Nyos\mod\JobDesc::$mod_checks, 'uri2'), ['id' => $id], $v);
                 // \f\pa([$id, $v]);
@@ -269,11 +293,18 @@ if (isset($_REQUEST['user_scan_all'])) {
         }
     }
 
+    
+    if( !empty($_REQUEST['clear_ocenki']['sp']) && !empty($_REQUEST['clear_ocenki']['date_start']) ){
+        \Nyos\mod\JOBDESC_DAYOCENKA::deleteOcenki( $db, $_REQUEST['clear_ocenki']['sp'], $_REQUEST['clear_ocenki']['date_start'] );
+    }
+    
     $r = ob_get_contents();
     ob_end_clean();
 
-    die($r);
+    // die($r);
 
+    \f\end2( $r, true, $return );
+    
 //    \f\end2('<div class="warn" style="padding:5px;" >'
 //            . '<nobr><b>смена добавлена</b>'
 //            . '<br/>с ' . date('d.m.y H:i', $start_time)
@@ -293,7 +324,7 @@ if (isset($_REQUEST['user_scan_all'])) {
     $r = ob_get_contents();
     ob_end_clean();
 
-    die($r);
+    // die($r);
 
     \f\end2($r, false);
 }
