@@ -163,6 +163,7 @@ try {
 
             if ($time['sec'] > 15)
                 break;
+            
         } else {
 
             // echo '<br/>пропуск ' . $v['id'];
@@ -175,7 +176,7 @@ try {
     // \f\pa($jms_ar__jm_d, 2, '', '$jms_ar__jm_d');
 
     if (empty($jms))
-        die('нечего грузить');
+        \f\end2('нечего грузить',false);
 
     $in = [];
 
@@ -314,7 +315,6 @@ try {
 //            . '</nobr>'
 //            . '</div>', true);
 } catch (\Exception $exc) {
-
 
     echo '<pre>';
     print_r($exc);
